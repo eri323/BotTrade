@@ -1,0 +1,25 @@
+# Core
+alpaca-py
+pandas
+numpy
+ta
+
+# Machine Learning
+scikit-learn
+xgboost
+joblib
+
+# Infraestructura
+python-dotenv
+loguru
+# (Persistencia: sqlite3 viene en la stdlib — no requiere paquete)
+
+# Visualización
+matplotlib
+streamlit
+
+# Testing y calidad
+pytest
+pytest-mock
+pytest-cov
+ruff

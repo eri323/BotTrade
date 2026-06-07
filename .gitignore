@@ -1,0 +1,37 @@
+# Secretos — NUNCA commitear
+.env
+
+# Bases de datos
+*.db
+*.sqlite3
+
+# Modelos y artefactos generados
+models/saved/*.pkl
+models/saved/*.json
+models/feature_importance.png
+backtest_results.png
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+
+# Testing / lint / coverage
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
