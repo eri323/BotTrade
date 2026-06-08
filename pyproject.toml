@@ -15,6 +15,11 @@ select = ["E", "F", "I", "UP", "B", "W"]
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "--cov=src --cov-report=term-missing"
+filterwarnings = [
+    # Deprecación interna de alpaca-py (importa websockets.legacy). No es código nuestro.
+    "ignore::DeprecationWarning:websockets",
+    "ignore::DeprecationWarning:websockets.legacy",
+]
 
 [tool.coverage.run]
 omit = ["tests/*", "scripts/*"]

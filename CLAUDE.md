@@ -9,7 +9,7 @@ Bot de trading algorítmico con ML sobre **cripto** (BTC/USD, ETH/USD), **velas 
 
 **Filosofía:** el objetivo no es ganar dinero rápido, es construir un sistema verificable, instrumentado y testeado. El aprendizaje y el portafolio son el valor garantizado.
 
-**Fase actual:** `Fase 0 — Setup`  ← actualizar a medida que avanza el proyecto.
+**Fase actual:** `Fase 2 — Bot en vivo (paper, reglas)` (Fases 0 y 1 completas)  ← actualizar a medida que avanza el proyecto.
 
 ## Stack
 
