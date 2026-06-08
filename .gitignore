@@ -1,5 +1,15 @@
 # Secretos — NUNCA commitear
 .env
+.env.*
+!.env.example          # la plantilla SÍ se versiona (sin valores reales)
+*.key
+*.pem
+secrets.*
+credentials.*
+
+# Logs
+*.log
+logs/
 
 # Bases de datos
 *.db
