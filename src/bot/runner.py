@@ -26,6 +26,14 @@ from src.strategy.base import BUY, HOLD, SELL, Strategy
 SELL_STOP = "SELL_STOP"
 
 
+def _to_float(value: object, default: float = 0.0) -> float:
+    """Convierte a float de forma segura (Alpaca devuelve strings; un mock no convierte)."""
+    try:
+        return float(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return default
+
+
 class TradingBot:
     def __init__(
         self,
@@ -42,7 +50,13 @@ class TradingBot:
         self.symbols = symbols
 
     def _record(
-        self, symbol: str, side: str, qty: float, price: float, order_id: str | None = None
+        self,
+        symbol: str,
+        side: str,
+        qty: float,
+        price: float,
+        order_id: str | None = None,
+        pnl: float = 0.0,
     ) -> None:
         self.repository.save_trade(
             timestamp=datetime.now(UTC).isoformat(),
@@ -50,6 +64,7 @@ class TradingBot:
             side=side,
             qty=qty,
             price=price,
+            pnl=pnl,
             order_id=order_id,
         )
 
@@ -67,8 +82,9 @@ class TradingBot:
             pnl_pct = float(position.unrealized_plpc)
             if self.risk.should_stop_loss(pnl_pct):
                 logger.warning(f"Stop-loss en {symbol} (P&L {pnl_pct:.2%}); cerrando.")
+                realized_pnl = _to_float(getattr(position, "unrealized_pl", 0.0))
                 self.broker.close_position(symbol)
-                self._record(symbol, SELL_STOP, float(position.qty), last_price)
+                self._record(symbol, SELL_STOP, float(position.qty), last_price, pnl=realized_pnl)
                 return SELL_STOP
 
         signal = self.strategy.generate_signal(features)
@@ -89,22 +105,43 @@ class TradingBot:
             return HOLD
 
         if signal == SELL and position is not None:
+            realized_pnl = _to_float(getattr(position, "unrealized_pl", 0.0))
             self.broker.close_position(symbol)
-            self._record(symbol, SELL, float(position.qty), last_price)
+            self._record(symbol, SELL, float(position.qty), last_price, pnl=realized_pnl)
             logger.info(f"SELL {symbol} (señal de la estrategia).")
             return SELL
 
         return HOLD
 
+    def _record_daily_metric(self) -> None:
+        """Guarda el valor del portafolio, P&L del día y drawdown vs pico histórico."""
+        account = self.broker.get_account()
+        portfolio_value = _to_float(getattr(account, "portfolio_value", 0.0))
+        last_equity = _to_float(getattr(account, "last_equity", None), portfolio_value)
+        daily_pnl_pct = (portfolio_value - last_equity) / last_equity if last_equity else 0.0
+
+        history = [m["portfolio_value"] for m in self.repository.get_daily_metrics()]
+        peak = max(history + [portfolio_value]) if (history or portfolio_value) else portfolio_value
+        drawdown_pct = (portfolio_value - peak) / peak if peak else 0.0
+
+        self.repository.save_daily_metric(
+            date=datetime.now(UTC).date().isoformat(),
+            portfolio_value=portfolio_value,
+            daily_pnl_pct=daily_pnl_pct,
+            drawdown_pct=drawdown_pct,
+        )
+
     def run_once(self, fetch: Callable[[str], pd.DataFrame]) -> dict[str, str]:
         """Procesa todos los símbolos una vez. `fetch(symbol) -> df_raw`."""
-        return {symbol: self.process_symbol(symbol, fetch(symbol)) for symbol in self.symbols}
+        actions = {symbol: self.process_symbol(symbol, fetch(symbol)) for symbol in self.symbols}
+        self._record_daily_metric()
+        return actions
 
     def run(
         self,
         fetch: Callable[[str], pd.DataFrame],
         interval_seconds: int = 3600,
-        stop_event: "threading.Event | None" = None,
+        stop_event: threading.Event | None = None,
     ) -> None:
         """Bucle continuo: procesa y duerme. Si se pasa `stop_event`, para de forma ordenada."""
         logger.info(f"Bot iniciado. Símbolos: {self.symbols}. Intervalo: {interval_seconds}s.")

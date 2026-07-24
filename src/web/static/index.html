@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trading Bot</title>
+  <link rel="stylesheet" href="/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">🤖 Trading Bot</div>
+    <div class="topbar-right">
+      <span id="mode" class="badge">—</span>
+      <span id="state" class="state">●</span>
+      <button id="btn-start" class="btn btn-start">▶ Iniciar</button>
+      <button id="btn-stop" class="btn btn-stop">■ Detener</button>
+    </div>
+  </header>
+
+  <section class="cards">
+    <div class="card"><span class="card-label">Portafolio</span><span id="portfolio" class="card-value">—</span></div>
+    <div class="card"><span class="card-label">Efectivo</span><span id="cash" class="card-value">—</span></div>
+    <div class="card"><span class="card-label">P&L hoy</span><span id="pnl-today" class="card-value">—</span></div>
+    <div class="card"><span class="card-label">P&L total</span><span id="pnl-total" class="card-value">—</span></div>
+  </section>
+
+  <section class="panel"><h2>Equity curve</h2><canvas id="equity-chart" height="90"></canvas></section>
+
+  <div class="two-col">
+    <section class="panel">
+      <h2>Posiciones abiertas</h2>
+      <table><thead><tr><th>Símbolo</th><th>Cant.</th><th>Entrada</th><th>P&L</th></tr></thead>
+        <tbody id="positions-body"></tbody></table>
+    </section>
+    <section class="panel">
+      <h2>Métricas</h2>
+      <table><tbody id="metrics-body"></tbody></table>
+    </section>
+  </div>
+
+  <section class="panel">
+    <h2>Historial de trades</h2>
+    <table><thead><tr><th>Fecha</th><th>Símbolo</th><th>Lado</th><th>Precio</th><th>P&L</th></tr></thead>
+      <tbody id="trades-body"></tbody></table>
+  </section>
+
+  <script src="/app.js"></script>
+</body>
+</html>

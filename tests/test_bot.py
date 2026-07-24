@@ -158,3 +158,55 @@ def test_run_does_nothing_if_event_already_set(mocker, risk, repo, sample_ohlcv)
     bot.run(fetch, interval_seconds=0, stop_event=stop_event)
 
     assert calls["n"] == 0
+
+
+def test_sell_records_realized_pnl(mocker, risk, repo, sample_ohlcv):
+    pos = mocker.MagicMock(unrealized_plpc="0.03", unrealized_pl="150.50", qty="0.01")
+    broker = _broker(mocker, position=pos)
+    bot = _bot(broker, FixedStrategy("SELL"), risk, repo)
+
+    bot.process_symbol("BTC/USD", sample_ohlcv)
+
+    assert repo.get_trades()[0]["pnl"] == pytest.approx(150.50)
+
+
+def test_stop_loss_records_realized_pnl(mocker, risk, repo, sample_ohlcv):
+    pos = mocker.MagicMock(unrealized_plpc="-0.05", unrealized_pl="-220.00", qty="0.01")
+    broker = _broker(mocker, position=pos)
+    bot = _bot(broker, FixedStrategy("HOLD"), risk, repo)
+
+    bot.process_symbol("BTC/USD", sample_ohlcv)
+
+    assert repo.get_trades()[0]["pnl"] == pytest.approx(-220.00)
+
+
+def test_run_once_records_daily_metric(mocker, risk, repo, sample_ohlcv):
+    broker = _broker(mocker, position=None)
+    broker.get_account.return_value.portfolio_value = "10500.00"
+    broker.get_account.return_value.last_equity = "10000.00"
+    bot = _bot(broker, FixedStrategy("HOLD"), risk, repo)
+
+    bot.run_once(lambda symbol: sample_ohlcv)
+
+    metrics = repo.get_daily_metrics()
+    assert len(metrics) == 1
+    assert metrics[0]["portfolio_value"] == pytest.approx(10500.0)
+    assert metrics[0]["daily_pnl_pct"] == pytest.approx(0.05)
+
+
+def test_daily_metric_drawdown_vs_peak(mocker, risk, repo, sample_ohlcv):
+    broker = _broker(mocker, position=None)
+    bot = _bot(broker, FixedStrategy("HOLD"), risk, repo)
+
+    # Ciclo 1: pico en 10000
+    broker.get_account.return_value.portfolio_value = "10000.00"
+    broker.get_account.return_value.last_equity = "10000.00"
+    bot.run_once(lambda symbol: sample_ohlcv)
+
+    # Ciclo 2: cae a 9000 -> drawdown -10%
+    broker.get_account.return_value.portfolio_value = "9000.00"
+    broker.get_account.return_value.last_equity = "10000.00"
+    bot.run_once(lambda symbol: sample_ohlcv)
+
+    metrics = repo.get_daily_metrics()
+    assert metrics[1]["drawdown_pct"] == pytest.approx(-0.10)

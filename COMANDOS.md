@@ -63,6 +63,20 @@ Si prefieres no activar, llama al python del venv directamente. **La barra cambi
 
 ---
 
+## Dashboard web (interfaz con botones)
+
+Con el venv activado:
+```bash
+python scripts/run_dashboard.py
+```
+Luego abre **http://127.0.0.1:8000** en el navegador. Desde ahí puedes iniciar/detener
+el bot con botones y ver estado, cuenta, posiciones, historial, métricas y la equity curve.
+
+- Solo accesible desde esta PC (localhost). El acceso remoto llega en la fase de VPS.
+- El bot corre mientras el servidor esté abierto. `Ctrl + C` detiene el servidor.
+
+---
+
 ## Notas
 
 - El bot corre **solo mientras la terminal/ventana esté abierta**. Si la cierras o apagas el PC, se detiene. (Para 24/7 real → Fase 4: VPS.)

@@ -6,6 +6,7 @@ import pytest
 
 from src.backtest.metrics import (
     buy_and_hold_metrics,
+    live_summary,
     max_drawdown,
     profit_factor,
     sharpe_ratio,
@@ -129,3 +130,30 @@ def test_summary_keys():
     ):
         assert key in s
     assert s["total_trades"] == 3
+
+
+# --------------------------------------------------------------------------- #
+# live_summary
+# --------------------------------------------------------------------------- #
+
+
+def test_live_summary_basic():
+    trades = [{"pnl": 100.0}, {"pnl": -40.0}, {"pnl": 60.0}]
+    portfolio_values = [10_000.0, 10_200.0, 10_120.0]
+
+    result = live_summary(trades, portfolio_values)
+
+    assert result["total_trades"] == 3
+    assert result["win_rate_pct"] == pytest.approx(66.67, abs=0.01)
+    assert result["profit_factor"] == pytest.approx(4.0)
+    assert result["total_return_pct"] == pytest.approx(1.2)
+
+
+def test_live_summary_handles_no_losses_and_empty():
+    # Sin pérdidas -> profit_factor sería infinito; debe devolverse None (JSON-safe).
+    assert live_summary([{"pnl": 10.0}], [10_000.0])["profit_factor"] is None
+    # Sin datos -> todo a cero, sin errores.
+    empty = live_summary([], [])
+    assert empty["total_trades"] == 0
+    assert empty["sharpe_ratio"] == 0.0
+    assert empty["max_drawdown_pct"] == 0.0

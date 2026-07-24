@@ -29,8 +29,12 @@ CREATE TABLE IF NOT EXISTS daily_metrics (
 
 
 def get_connection(path: str | None = None) -> sqlite3.Connection:
-    """Conexión SQLite con filas accesibles por nombre (sqlite3.Row)."""
-    conn = sqlite3.connect(path or settings.DATABASE_PATH)
+    """Conexión SQLite con filas accesibles por nombre (sqlite3.Row).
+
+    check_same_thread=False: la capa web puede llamar a SQLite desde hilos de trabajo
+    de FastAPI distintos al hilo que creó la conexión.
+    """
+    conn = sqlite3.connect(path or settings.DATABASE_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
 

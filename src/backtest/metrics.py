@@ -64,6 +64,33 @@ def summary(result: dict, initial_capital: float) -> dict:
     }
 
 
+def live_summary(trades: list[dict], portfolio_values: list[float]) -> dict:
+    """Métricas del trading en vivo a partir de trades (con pnl) y la serie de valor del portafolio.
+
+    `profit_factor` se devuelve como None cuando sería infinito (no hay pérdidas),
+    para que el resultado sea serializable a JSON.
+    """
+    pf = profit_factor(trades)
+    result = {
+        "win_rate_pct": round(win_rate(trades) * 100, 2),
+        "profit_factor": None if pf == float("inf") else round(pf, 3),
+        "total_trades": len(trades),
+        "total_return_pct": 0.0,
+        "sharpe_ratio": 0.0,
+        "max_drawdown_pct": 0.0,
+    }
+    if len(portfolio_values) >= 1:
+        equity = pd.Series(portfolio_values, dtype="float64")
+        result["max_drawdown_pct"] = round(max_drawdown(equity) * 100, 2)
+    if len(portfolio_values) >= 2:
+        equity = pd.Series(portfolio_values, dtype="float64")
+        result["sharpe_ratio"] = round(sharpe_ratio(equity), 3)
+        result["total_return_pct"] = round(
+            total_return(portfolio_values[0], portfolio_values[-1]) * 100, 2
+        )
+    return result
+
+
 def buy_and_hold_metrics(df: pd.DataFrame, initial_capital: float = 10_000.0) -> dict:
     """Baseline: comprar al inicio del periodo y mantener hasta el final.
 
